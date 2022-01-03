@@ -1,5 +1,4 @@
 import calculator.Interpreter;
-
 import static calculator.Ast.*;
 
 public class Main {
