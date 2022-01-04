@@ -1,5 +1,6 @@
 package calculator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +16,10 @@ public class Interpreter {
 
     private static Ast.Environment newEnvironment(Optional<Ast.Environment> next) {
         return new Ast.Environment(new HashMap<>(), next);
+    }
+
+    public Integer getValue(String name) {
+        return variableEnvironment.bindings().get(name);
     }
 
     public int interpret(Ast.Expression expression) {
@@ -78,6 +83,36 @@ public class Interpreter {
             var values = actualParams.stream()
                     .map(a -> interpret(a))
                     .collect(Collectors.toUnmodifiableList());
+            var backup = variableEnvironment;
+            variableEnvironment = newEnvironment(Optional.of(variableEnvironment));
+            int i = 0;
+            for (var formalParamName : formalParams) {
+                variableEnvironment.bindings().put(formalParamName, values.get(i));
+                i++;
+            }
+            var result = interpret(body);
+            variableEnvironment = backup;
+            return result;
+        } else if (expression instanceof Ast.LabelledCall labelledCall) {
+            var definition = functionEnvironment.get(labelledCall.name());
+            if (definition == null) {
+                throw new RuntimeException("Function " + labelledCall.name() + "  is not found");
+            }
+            var labels = labelledCall.args();
+            var mapping = new HashMap<String, Ast.Expression>();
+            for (var label : labels) {
+                mapping.put(label.name(), label.parameter());
+            }
+            var formalParams = definition.args();
+            var actualParams = new ArrayList<Ast.Expression>();
+            for (var param : formalParams) {
+                actualParams.add(mapping.get(param));
+            }
+
+            var body = definition.body();
+            var values = actualParams.stream()
+                    .map(a -> interpret(a))
+                    .collect(Collectors.toList());
             var backup = variableEnvironment;
             variableEnvironment = newEnvironment(Optional.of(variableEnvironment));
             int i = 0;

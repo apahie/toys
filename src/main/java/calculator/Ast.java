@@ -59,6 +59,10 @@ public class Ast {
         return new BinaryExpression(Operator.EQUAL_EQUAL, lhs, rhs);
     }
 
+    public static Println Println(Expression arg) {
+        return new Println(arg);
+    }
+
     public static FunctionDefinition DefineFunction(String name, List<String> args, Expression body) {
         return new FunctionDefinition(name, args, body);
     }
@@ -66,7 +70,7 @@ public class Ast {
         return new FunctionCall(name, Arrays.asList(args));
     }
 
-    sealed public interface Expression permits Assignment, BinaryExpression, BlockExpression, FunctionCall, Identifier, IfExpression, IntegerLiteral, WhileExpression {}
+    sealed public interface Expression permits Assignment, BinaryExpression, BlockExpression, FunctionCall, Identifier, IfExpression, IntegerLiteral, LabelledCall, Println, WhileExpression {}
 
     public record BinaryExpression(Operator operator, Expression lhs, Expression rhs) implements Expression {}
     public record IntegerLiteral(int value) implements Expression {}
@@ -94,7 +98,12 @@ public class Ast {
 
     public record Program(List<TopLevel> definitions) {}
 
+    public record Println(Expression arg) implements Expression {}
+
     public record GlobalVariableDefinition(String name, Expression expression) implements TopLevel {}
     public record FunctionDefinition(String name, List<String> args, Expression body) implements TopLevel {}
     public record FunctionCall(String name, List<Expression> args) implements Expression {}
+
+    public record LabelledParameter(String name, Expression parameter) {}
+    public record LabelledCall(String name, List<LabelledParameter> args) implements Expression {}
 }
